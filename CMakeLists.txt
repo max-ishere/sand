@@ -7,5 +7,8 @@ project("Sand"
 )
 
 # add_subdirectory(src)
-add_subdirectory(tests)
 include_directories(include)
+add_executable(main main.cpp)
+target_link_libraries(main
+        PUBLIC SDL2)
+add_subdirectory(tests)
