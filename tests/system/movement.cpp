@@ -26,11 +26,11 @@ TEST_F(MovementSystemTest, Movement) {
   float time_delta = 1.f;
   ::sand::system::Movement(tregistry, time_delta);
 
-  ASSERT_EQ(tregistry.get<Acceleration>(tentity), (Acceleration{1.f, 0.f}))
+  EXPECT_EQ(tregistry.get<Acceleration>(tentity), (Acceleration{1.f, 0.f}))
       << "Should not change acceleration";
-  ASSERT_EQ(tregistry.get<Velocity>(tentity), (Velocity{1.f, 0.f}))
+  EXPECT_EQ(tregistry.get<Velocity>(tentity), (Velocity{1.f, 0.f}))
       << "Should tick velocity from acceleration";
-  ASSERT_EQ(tregistry.get<Position>(tentity), (Position{1.f, 0.f}))
+  EXPECT_EQ(tregistry.get<Position>(tentity), (Position{1.f, 0.f}))
       << "Should tick position in same call as velocity";
 }
 } // namespace sand::test
