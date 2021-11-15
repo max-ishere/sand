@@ -1,14 +1,19 @@
-cmake_minimum_required(VERSION 3.10)
-set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required(VERSION 3.17)
+set(CMAKE_CXX_STANDARD 20)
 project("Sand"
         DESCRIPTION "A game"
-        # HOMEPAGE_URL
-        LANGUAGES CXX
-)
+        LANGUAGES CXX)
 
-# add_subdirectory(src)
+set(CMAKE_BUILD_TYPE Debug)
+add_compile_definitions("$<$<CONFIG:DEBUG>:DEBUG>")
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 include_directories(include)
+
 add_executable(main main.cpp)
 target_link_libraries(main
         PUBLIC SDL2)
+
 add_subdirectory(tests)
+add_subdirectory(src/system)

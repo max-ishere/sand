@@ -1,14 +1,17 @@
 find_package(PkgConfig)
 pkg_search_module(GTEST REQUIRED gtest_main)
 
-add_executable(sand_test main.cpp)
+add_executable(sand_test main.cpp
+  system/movement.cpp)
 
 target_compile_options(sand_test
   PUBLIC ${GTEST_CXXFLAGS})
 
 target_link_libraries(sand_test
   PUBLIC ${GTEST_LDFLAGS}
-  PUBLIC SDL2)
+  PUBLIC SDL2
+
+  PUBLIC sand_system)
 
 set_target_properties(sand_test PROPERTIES
   CXX_STANDARD 20)
