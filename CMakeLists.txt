@@ -11,9 +11,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(include)
 
-add_executable(main main.cpp)
-target_link_libraries(main
-        PUBLIC SDL2)
-
 add_subdirectory(tests)
-add_subdirectory(src/system)
+add_subdirectory(src)
+add_subdirectory(src/sdl)

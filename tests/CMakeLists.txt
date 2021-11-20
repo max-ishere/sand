@@ -9,7 +9,9 @@ target_compile_options(sand_test
 
 target_link_libraries(sand_test
   PUBLIC ${GTEST_LDFLAGS}
-  PUBLIC sand_system)
+  PUBLIC sand_system
+  PUBLIC SDL2
+  PUBLIC SDL2_image)
 
 set_target_properties(sand_test PROPERTIES
   CXX_STANDARD 20)
