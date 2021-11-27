@@ -3,8 +3,8 @@
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
+#include <cassert>
 #include <entt/entity/registry.hpp>
-#include <sand/component/movement.hpp>
 #include <sand/component/rendering.hpp>
 #include <sand/sdl/system/rendering.hpp>
 #include <string>
@@ -49,12 +49,15 @@ void sand::sdl::system::SdlRendering::operator()(entt::registry &registry) {
   SDL_RenderClear(renderer);
 
   SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
-  registry.view<component::gRectangle, component::Position>().each(
-      [this](const auto &rectangle, const auto &position) {
-        SDL_Rect sdl_rect{(int)(position.x * 10), (int)(position.y * 10),
-                          rectangle.w, rectangle.h};
-        SDL_RenderFillRect(renderer, &sdl_rect);
-      });
+
+  assert(false);
+#warning "Add an implementation of Rendering system throuhg physics system"
+  // registry.view<component::gRectangle, component::Position>().each(
+  //     [this](const auto &rectangle, const auto &position) {
+  //       SDL_Rect sdl_rect{(int)(position.x * 10), (int)(position.y * 10),
+  //                         rectangle.w, rectangle.h};
+  //       SDL_RenderFillRect(renderer, &sdl_rect);
+  //     });
 
   SDL_RenderPresent(renderer);
 }
