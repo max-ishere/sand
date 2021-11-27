@@ -1,12 +1,9 @@
-add_subdirectory(system)
-add_subdirectory(sdl/system)
+add_executable(sand_main main.cpp)
 
 find_package(box2d REQUIRED)
 
-add_executable(sand_game main.cpp)
-target_link_libraries(sand_game
-  PUBLIC box2d
+add_subdirectory(system)
+target_link_libraries(sand_main
   PUBLIC sand_system
-  PUBLIC sand_sdl_system
   PUBLIC SDL2
-  PUBLIC SDL2_image)
+  PUBLIC box2d)

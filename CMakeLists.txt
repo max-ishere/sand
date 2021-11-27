@@ -10,6 +10,4 @@ add_compile_definitions("$<$<CONFIG:DEBUG>:DEBUG>")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(include)
-
-add_subdirectory(tests)
 add_subdirectory(src)
