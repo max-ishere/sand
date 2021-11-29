@@ -1,4 +1,5 @@
+#include <box2d/b2_joint.h>
 #include <box2d/b2_math.h>
-struct PlayerControllable {
-  b2Vec2 velocity{};
+struct MovementIntent {
+  float angle{}, velocity{};
 };

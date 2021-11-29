@@ -46,4 +46,4 @@ void ConvertPhysicsToRenderData(entt::registry &, Renderer::CameraData);
 
 void HandleEvents(entt::registry &, bool &quit);
 
-void HandlePlayerControl(entt::registry &);
+void HandleControlIntents(entt::registry &);

@@ -2,6 +2,7 @@
 #include <box2d/b2_body.h>
 #include <box2d/b2_math.h>
 #include <entt/entity/fwd.hpp>
+#include <numbers>
 #include <sand/component/player_controllable.hpp>
 #include <sand/systems.hpp>
 
@@ -29,40 +30,46 @@ constexpr void HandleKbEvents(entt::registry &registry, SDL_KeyboardEvent e) {
   switch (e.keysym.sym) {
   case SDLK_w:
     if (e.state == SDL_PRESSED)
-      registry.view<PlayerControllable>().each(
-          [](PlayerControllable &controller) {
-            controller.velocity.y = player_speed;
-          });
+      registry.view<MovementIntent>().each([](auto &intent) {
+        intent.velocity = 3;
+        intent.angle = std::numbers::pi / 2;
+      });
     break;
 
   case SDLK_a:
     if (e.state == SDL_PRESSED)
-      registry.view<PlayerControllable>().each(
-          [](PlayerControllable &controller) {
-            controller.velocity.y = -player_speed;
-          });
+      registry.view<MovementIntent>().each([](auto &intent) {
+        intent.velocity = 3;
+        intent.angle = std::numbers::pi;
+      });
     break;
 
   case SDLK_s:
+    if (e.state == SDL_PRESSED)
+      registry.view<MovementIntent>().each([](auto &intent) {
+        intent.velocity = 3;
+        intent.angle = std::numbers::pi * 3 / 2;
+      });
     break;
 
   case SDLK_d:
+    if (e.state == SDL_PRESSED)
+      registry.view<MovementIntent>().each([](auto &intent) {
+        intent.velocity = 3;
+        intent.angle = 0;
+      });
     break;
   }
 }
 
-void HandlePlayerControl(entt::registry &registry) {
-  registry.view<PlayerControllable, b2Body *>().each(
-      [](PlayerControllable &controller, b2Body *physics_body) {
+void HandleControlIntents(entt::registry &registry) {
+  registry.view<MovementIntent, b2Body *>().each(
+      [](MovementIntent &intent, b2Body *physics_body) {
         const b2Vec2 &body_velocity = physics_body->GetLinearVelocity();
 
-        if (controller.velocity.x < body_velocity.x)
-          controller.velocity.x = body_velocity.x;
+        b2Vec2 velocity(cos(intent.angle) * intent.velocity,
+                        sin(intent.angle) * intent.velocity);
 
-        if (controller.velocity.y < body_velocity.y)
-          controller.velocity.y = body_velocity.y;
-
-        physics_body->SetLinearVelocity(controller.velocity);
-        controller.velocity = b2Vec2_zero;
+        physics_body->SetLinearVelocity(velocity);
       });
 }

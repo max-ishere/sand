@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
   const auto player = registry.create();
   MakePhysicsEntity(registry, player, Physics.world);
-  registry.emplace<PlayerControllable>(player);
+  registry.emplace<MovementIntent>(player);
   b2PolygonShape shape;
   shape.SetAsBox(.5f, .5f);
   registry.get<b2Body *>(player)->CreateFixture(&shape, 1)->SetFriction(1);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     timer.start();
 
     HandleEvents(registry, quit);
-    HandlePlayerControl(registry);
+    HandleControlIntents(registry);
     Physics(registry, 1.f / fps);
     const auto position = registry.get<b2Body *>(player)->GetPosition();
     ConvertPhysicsToRenderData(
