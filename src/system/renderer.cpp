@@ -3,6 +3,7 @@
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
 #include <iostream>
 #include <sand/component/renderer_data.hpp>
@@ -14,24 +15,30 @@ void Renderer::operator()(entt::registry &registry) {
 
   SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
 
+  int width = 0, height = 0;
+  SDL_GetWindowSize(window, &width, &height);
+
   static_assert(Renderer::position_to_pixels % 2 == 0,
                 "Pixel scale should be divisible by 2");
 
-  registry.view<RendererData>().each([this](const auto &renderer_data) {
-    SDL_Rect rect{
-        .x = (int)(round(renderer_data.x * position_to_pixels)) -
-             camera_position.x * position_to_pixels -
-             (int)(position_to_pixels / 2),
-        .y = (int)(round(renderer_data.y * position_to_pixels)) -
-             camera_position.y * position_to_pixels -
-             (int)(position_to_pixels / 2),
-        .w = position_to_pixels,
-        .h = position_to_pixels,
-    };
-    SDL_RenderDrawRect(renderer, &rect);
-  });
+  registry.view<RendererData>().each(
+      [this, width, height](const auto &renderer_data) {
+        SDL_Rect rect{
+            .x = (int)(round(renderer_data.x * position_to_pixels)) -
+                 camera_data.x * position_to_pixels -
+                 (int)(position_to_pixels / 2) + (int)round(width / 2),
+            .y = (int)(round(renderer_data.y * position_to_pixels)) -
+                 camera_data.y * position_to_pixels -
+                 (int)(position_to_pixels / 2) + (int)round(height / 2),
+            .w = position_to_pixels,
+            .h = position_to_pixels,
+        };
+        SDL_RenderDrawRect(renderer, &rect);
+      });
 
   SDL_RenderPresent(renderer);
+  last_get_ticks = current_get_ticks;
+  current_get_ticks = SDL_GetTicks();
 }
 
 namespace {
