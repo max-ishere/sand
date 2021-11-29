@@ -13,14 +13,11 @@
 class Renderer {
   SDL_Window *window = nullptr;
   SDL_Renderer *renderer = nullptr;
-
   constexpr static auto position_to_pixels = 32;
-
-  std::intmax_t last_get_ticks{}, current_get_ticks{};
 
 public:
   struct CameraData {
-    int x{}, y{}, hx_size{}, hy_size{};
+    float x{}, y{}, hx_size{}, hy_size{};
   } camera_data;
 
   Renderer();
@@ -32,8 +29,6 @@ public:
     SDL_GetWindowSize(window, &width, &height);
     return std::pair<int, int>(width, height);
   }
-
-  inline int GetDeltaTime() { return last_get_ticks - current_get_ticks; }
 };
 
 class Physics {
@@ -48,3 +43,7 @@ public:
 };
 
 void ConvertPhysicsToRenderData(entt::registry &, Renderer::CameraData);
+
+void HandleEvents(entt::registry &, bool &quit);
+
+void HandlePlayerControl(entt::registry &);

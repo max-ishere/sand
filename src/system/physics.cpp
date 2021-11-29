@@ -18,10 +18,6 @@ void ConvertPhysicsToRenderData(entt::registry &registry,
 
     position.x -= camera_data.x;
     position.y -= camera_data.y;
-    // if (abs(position.x) < camera_data.hx_size and
-    //     abs(position.y) < camera_data.hy_size)
     registry.emplace_or_replace<RendererData>(entity, position.x, position.y);
-    // else
-    //   registry.remove<RendererData>(entity);
   });
 }
