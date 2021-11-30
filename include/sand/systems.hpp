@@ -1,35 +1,11 @@
 #pragma once
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
 #include <box2d/box2d.h>
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/registry.hpp>
+#include <sand/component/player_controllable.hpp>
+#include <sand/system/renderer.hpp>
 #include <utility>
-
-class Renderer {
-  SDL_Window *window = nullptr;
-  SDL_Renderer *renderer = nullptr;
-  constexpr static auto position_to_pixels = 32;
-
-public:
-  struct CameraData {
-    float x{}, y{}, hx_size{}, hy_size{};
-  } camera_data;
-
-  Renderer();
-  ~Renderer();
-
-  void operator()(entt::registry &);
-  auto WindowSize() {
-    int width = 0, height = 0;
-    SDL_GetWindowSize(window, &width, &height);
-    return std::pair<int, int>(width, height);
-  }
-};
 
 class Physics {
   static constexpr int32_t B2_RECOMENDED_VELOCITY_ITERATIONS = 8,
@@ -44,6 +20,6 @@ public:
 
 void ConvertPhysicsToRenderData(entt::registry &, Renderer::CameraData);
 
-void HandleEvents(entt::registry &, bool &quit);
+void HandleEvents(entt::registry &, bool &quit, HUDstate &);
 
 void HandleControlIntents(entt::registry &);

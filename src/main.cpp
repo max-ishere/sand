@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     b2PolygonShape shape;
     shape.SetAsBox(.5f, .5f);
-    body->CreateFixture(&shape, 1)->SetFriction(1);
+    body->CreateFixture(&shape, 1)->SetFriction(5);
   }
 
   const auto player = registry.create();
@@ -49,14 +49,16 @@ int main(int argc, char *argv[]) {
   registry.emplace<MovementIntent>(player);
   b2PolygonShape shape;
   shape.SetAsBox(.5f, .5f);
-  registry.get<b2Body *>(player)->CreateFixture(&shape, 1)->SetFriction(1);
+  registry.get<b2Body *>(player)->CreateFixture(&shape, 1)->SetFriction(5);
 
   bool quit = false;
   while (!quit) {
     Timer timer;
     timer.start();
 
-    HandleEvents(registry, quit);
+    HUDstate state;
+
+    HandleEvents(registry, quit, state);
     HandleControlIntents(registry);
     Physics(registry, 1.f / fps);
     const auto position = registry.get<b2Body *>(player)->GetPosition();

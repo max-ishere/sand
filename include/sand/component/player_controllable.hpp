@@ -1,3 +1,5 @@
+#pragma once
+
 #include <box2d/b2_joint.h>
 #include <box2d/b2_math.h>
 struct MovementIntent {
