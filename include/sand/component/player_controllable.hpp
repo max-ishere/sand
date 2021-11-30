@@ -3,3 +3,7 @@
 struct MovementIntent {
   float angle{}, velocity{};
 };
+
+struct HUDstate {
+  int x{}, y{};
+};
