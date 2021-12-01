@@ -1,4 +1,5 @@
 #pragma once
+#include <box2d/b2_math.h>
 struct RendererData {
-  float x{}, y{};
+  bool sprite = false;
 };

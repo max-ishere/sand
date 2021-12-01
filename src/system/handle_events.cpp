@@ -5,11 +5,11 @@
 #include <box2d/b2_math.h>
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
+#include <entt/entity/registry.hpp>
 #include <numbers>
 #include <sand/component/player_controllable.hpp>
-#include <sand/systems.hpp>
+#include <sand/system/kbd_control.hpp>
 #include <type_traits>
-
 constexpr void HandleKbEvents(entt::registry &, SDL_KeyboardEvent,
                               HUDstate &state);
 
@@ -20,7 +20,7 @@ void HandleEvents(entt::registry &registry, bool &quit, HUDstate &state) {
       quit = true;
   }
 
-  float player_speed = 1.5;
+  float player_speed = 3;
 
   int keycount = 0;
   static const auto *keys = SDL_GetKeyboardState(&keycount);
@@ -29,7 +29,7 @@ void HandleEvents(entt::registry &registry, bool &quit, HUDstate &state) {
   state.y = keys[SDL_SCANCODE_W] - keys[SDL_SCANCODE_S];
 
   if (keys[SDL_SCANCODE_LSHIFT])
-    player_speed = 3;
+    player_speed = 10;
 
   static_assert(std::is_integral_v<decltype(state.x)> and
                     std::is_integral_v<decltype(state.y)>,

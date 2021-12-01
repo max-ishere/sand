@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
     b2PolygonShape shape;
     shape.SetAsBox(.5f, .5f);
     body->CreateFixture(&shape, 1)->SetFriction(5);
+    registry.emplace<RendererData>(entity);
   }
 
   const auto player = registry.create();
@@ -50,6 +51,7 @@ int main(int argc, char *argv[]) {
   b2PolygonShape shape;
   shape.SetAsBox(.5f, .5f);
   registry.get<b2Body *>(player)->CreateFixture(&shape, 1)->SetFriction(5);
+  registry.emplace<RendererData>(player, true);
 
   bool quit = false;
   while (!quit) {
@@ -62,19 +64,17 @@ int main(int argc, char *argv[]) {
     HandleControlIntents(registry);
     Physics(registry, 1.f / fps);
     const auto position = registry.get<b2Body *>(player)->GetPosition();
-    ConvertPhysicsToRenderData(
-        registry, Renderer::CameraData{.x = position.x, .y = position.y});
+    Renderer.camera_data = position;
     Renderer(registry);
 
     std::clog << "renderable entities: " << registry.view<RendererData>().size()
               << "\nphysics entities: " << registry.view<b2Body *>().size()
               << "\nwindow size: " << get<0>(Renderer.WindowSize()) << " "
+              << get<1>(Renderer.WindowSize()) << "\n\n"
               << "\n-----"
               << "Player data: pos: ("
               << registry.get<b2Body *>(player)->GetPosition().x << ", "
-              << registry.get<b2Body *>(player)->GetPosition().y << ")"
-
-              << get<1>(Renderer.WindowSize()) << "\n\n";
+              << registry.get<b2Body *>(player)->GetPosition().y << ")";
 
     timer.stop();
     if (timer.elapsedMilliseconds() < 1000.f / fps) {
