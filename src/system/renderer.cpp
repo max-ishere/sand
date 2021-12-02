@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <box2d/b2_body.h>
 #include <box2d/b2_math.h>
+#include <entt/entity/fwd.hpp>
 #include <entt/entity/registry.hpp>
 #include <iostream>
 #include <sand/component/renderer_data.hpp>
@@ -40,30 +41,30 @@ void Renderer::operator()(entt::registry &registry) {
   int center_x = round((width - position_to_pixels) / 2),
       center_y = round((height - position_to_pixels) / 2);
 
-  registry.view<RendererData, b2Body *>().each(
-      [this, center_x, center_y](const auto &renderer_data, const auto &body) {
-        b2Vec2 position = body->GetPosition();
-        SDL_Rect sprite_position{
-            .x = static_cast<int>(
-                round((position.x - camera_data.x + renderer_data.x_offset) *
-                          position_to_pixels +
-                      center_x)),
-            .y = static_cast<int>(
-                round(-(position.y - camera_data.y + renderer_data.y_offset) *
-                          position_to_pixels +
-                      center_y)),
+  auto view = registry.view<RendererData, b2Body *>();
+  view.each([this, center_x, center_y](const auto &renderer_data,
+                                       const auto &body) {
+    b2Vec2 position = body->GetPosition();
+    SDL_Rect sprite_position{
+        .x = static_cast<int>(
+            round((position.x - camera_data.x + renderer_data.x_offset) *
+                      position_to_pixels +
+                  center_x)),
+        .y = static_cast<int>(
+            round(-(position.y - camera_data.y + renderer_data.y_offset) *
+                      position_to_pixels +
+                  center_y)),
 
-            .w = position_to_pixels,
-            .h = position_to_pixels,
-        };
-        if (!renderer_data.sprite) {
-          SDL_RenderDrawRect(renderer, &sprite_position);
-        } else {
-          SDL_Rect sprite = sprite_data(renderer_data.sprite_id);
-          SDL_RenderCopy(renderer, sprite_data.tilemap, &sprite,
-                         &sprite_position);
-        }
-      });
+        .w = position_to_pixels,
+        .h = position_to_pixels,
+    };
+    if (!renderer_data.sprite) {
+      SDL_RenderDrawRect(renderer, &sprite_position);
+    } else {
+      SDL_Rect sprite = sprite_data(renderer_data.sprite_id);
+      SDL_RenderCopy(renderer, sprite_data.tilemap, &sprite, &sprite_position);
+    }
+  });
 
   SDL_RenderPresent(renderer);
 }

@@ -16,21 +16,23 @@ public:
   };
 
 #define SPRITE_SIZE pixels_per_sprite, pixels_per_sprite
+#define SPRITE_GRID(x, y) pixels_per_sprite *x, pixels_per_sprite *y
 
   [[nodiscard]] constexpr SDL_Rect operator()(SpriteId id) const {
     switch (id) {
     case SpriteId::Character:
-      return SDL_Rect{0, 0, SPRITE_SIZE};
+      return SDL_Rect{SPRITE_GRID(0, 0), SPRITE_SIZE};
       break;
     case SpriteId::Grass:
-      return SDL_Rect{0, pixels_per_sprite, SPRITE_SIZE};
+      return SDL_Rect{SPRITE_GRID(0, 1), SPRITE_SIZE};
       break;
     case SpriteId::Box:
-      return SDL_Rect{0, pixels_per_sprite * 2, SPRITE_SIZE};
+      return SDL_Rect{SPRITE_GRID(0, 2), SPRITE_SIZE};
       break;
     default:
       return SDL_Rect{};
     }
   }
 #undef SPRITE_SIZE
+#undef SPRITE_GRID
 };

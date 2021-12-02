@@ -12,6 +12,7 @@
 #include <ctime>
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/registry.hpp>
+#include <functional>
 #include <iostream>
 #include <sand/component/player_controllable.hpp>
 #include <sand/component/renderer_data.hpp>
@@ -70,7 +71,8 @@ int main(int argc, char *argv[]) {
   shape.m_radius = 0x1p-3;
   registry.get<b2Body *>(player)->CreateFixture(&shape, 1)->SetFriction(5);
   registry.emplace<RendererData>(player, true, SpriteData::SpriteId::Character,
-                                 0.f, 0.5 - shape.m_radius);
+                                 0.f, 0.5 - shape.m_radius,
+                                 RendererData::z_normal_index + 1);
 
   bool quit = false;
   while (!quit) {
@@ -89,6 +91,20 @@ int main(int argc, char *argv[]) {
     const RendererData &render_data = registry.get<RendererData>(player);
     Renderer.camera_data.x += render_data.x_offset;
     Renderer.camera_data.y += render_data.y_offset;
+
+    registry.sort<RendererData>([&registry](
+                                    const entt::entity lentity,
+                                    const entt::entity rentity) -> bool {
+      const auto &lposition = registry.get<b2Body *>(lentity)->GetPosition(),
+                 rposition = registry.get<b2Body *>(rentity)->GetPosition();
+
+      const auto lindex = registry.get<RendererData>(lentity).z_index,
+                 rindex = registry.get<RendererData>(lentity).z_index;
+
+      return (lposition.y > rposition.y or
+              lposition.x > rposition.x and lindex < rindex);
+    });
+
     Renderer(registry);
 
     std::clog << "renderable entities: " << registry.view<RendererData>().size()
