@@ -11,75 +11,57 @@
 #include <iostream>
 #include <sand/component/renderer_data.hpp>
 #include <sand/system/renderer.hpp>
+#include <sand/system/sprite_data.hpp>
+
+constexpr void RenderGround(SDL_Renderer *, const SpriteData &, const int,
+                            const int, const int, const int);
+
 void Renderer::operator()(entt::registry &registry) {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
 
   SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
 
-  int width = 0, height = 0;
-  SDL_GetWindowSize(window, &width, &height);
-
-  int grid_width = width / position_to_pixels + 4,
-      grid_height = height / position_to_pixels + 4;
-
-  for (auto i = 0u; i < grid_width; i++)
-    for (auto j = 0u; j < grid_height; j++) {
-      constexpr SDL_Rect grass{0, 16, 16, 16};
-
-      // position of left edge of the sprite(on the edge) relative to left edge
-      // of the screen
-      int x_offset_edge =
-          position_to_pixels -
-          static_cast<int>(round((width - position_to_pixels) / 2)) %
-              position_to_pixels;
-      int y_offset_edge =
-          position_to_pixels -
-          static_cast<int>(round((height - position_to_pixels) / 2)) %
-              position_to_pixels;
-
-      // position of the character in local coordinates relative to the closes
-      // tile
-
-      int x_offset_camera = static_cast<int>(
-          (camera_data.x - floor(camera_data.x)) * position_to_pixels);
-      int y_offset_camera = static_cast<int>(
-          (1.f - camera_data.y + floor(camera_data.y)) * position_to_pixels);
-
-      SDL_Rect rect{
-          .x = static_cast<int>((i * position_to_pixels) - x_offset_edge -
-                                x_offset_camera),
-          .y = static_cast<int>((j * position_to_pixels) - y_offset_edge -
-                                y_offset_camera),
-          .w = position_to_pixels,
-          .h = position_to_pixels,
-
-      };
-
-      SDL_RenderCopy(renderer, tilemap, &grass, &rect);
-    }
-
   static_assert(Renderer::position_to_pixels % 2 == 0,
                 "Pixel scale should be divisible by 2");
 
+  int width = 0, height = 0;
+  SDL_GetWindowSize(window, &width, &height);
+
+  int x_offset_camera = static_cast<int>(
+      (camera_data.x - floor(camera_data.x)) * Renderer::position_to_pixels);
+  int y_offset_camera =
+      static_cast<int>((1.f - camera_data.y + floor(camera_data.y)) *
+                       Renderer::position_to_pixels);
+
+  RenderGround(renderer, sprite_data, width, height, x_offset_camera,
+               y_offset_camera);
+
+  int center_x = round((width - position_to_pixels) / 2),
+      center_y = round((height - position_to_pixels) / 2);
+
   registry.view<RendererData, b2Body *>().each(
-      [this, width, height](const auto &renderer_data, const auto &body) {
+      [this, center_x, center_y](const auto &renderer_data, const auto &body) {
         b2Vec2 position = body->GetPosition();
-        SDL_Rect rect{
+        SDL_Rect sprite_position{
             .x = static_cast<int>(
-                (round((position.x - camera_data.x) * position_to_pixels)) -
-                (int)(position_to_pixels / 2) + (int)round(width / 2)),
+                round((position.x - camera_data.x + renderer_data.x_offset) *
+                          position_to_pixels +
+                      center_x)),
             .y = static_cast<int>(
-                -(round((position.y - camera_data.y) * position_to_pixels)) -
-                (int)(position_to_pixels / 2) + (int)round(height / 2)),
+                round(-(position.y - camera_data.y + renderer_data.y_offset) *
+                          position_to_pixels +
+                      center_y)),
+
             .w = position_to_pixels,
             .h = position_to_pixels,
         };
         if (!renderer_data.sprite) {
-          SDL_RenderDrawRect(renderer, &rect);
+          SDL_RenderDrawRect(renderer, &sprite_position);
         } else {
-          SDL_Rect sprite_size{.x = 0, .y = 0, .w = 16, .h = 16};
-          SDL_RenderCopy(renderer, tilemap, &sprite_size, &rect);
+          SDL_Rect sprite = sprite_data(renderer_data.sprite_id);
+          SDL_RenderCopy(renderer, sprite_data.tilemap, &sprite,
+                         &sprite_position);
         }
       });
 
@@ -110,7 +92,7 @@ Renderer::Renderer() {
 
   SDL_Surface *temp_surface = SDL_LoadBMP("assets/tilemap.bmp");
   SDLassert(temp_surface);
-  tilemap = SDL_CreateTextureFromSurface(renderer, temp_surface);
+  sprite_data.tilemap = SDL_CreateTextureFromSurface(renderer, temp_surface);
   SDL_FreeSurface(temp_surface);
 }
 Renderer::~Renderer() {
@@ -118,4 +100,37 @@ Renderer::~Renderer() {
   SDL_DestroyWindow(window);
 
   SDL_Quit();
+}
+
+constexpr void RenderGround(SDL_Renderer *renderer,
+                            const SpriteData &sprite_data, const int width,
+                            const int height, const int x_offset_camera,
+                            const int y_offset_camera) {
+  const int grid_width = width / Renderer::position_to_pixels + 4,
+            grid_height = height / Renderer::position_to_pixels + 4;
+
+  int x_offset_edge =
+      Renderer::position_to_pixels -
+      static_cast<int>(round((width - Renderer::position_to_pixels) / 2)) %
+          Renderer::position_to_pixels;
+  int y_offset_edge =
+      Renderer::position_to_pixels -
+      static_cast<int>(round((height - Renderer::position_to_pixels) / 2)) %
+          Renderer::position_to_pixels;
+
+  for (auto i = 0u; i < grid_width; i++)
+    for (auto j = 0u; j < grid_height; j++) {
+      constexpr SDL_Rect grass{0, 16, 16, 16};
+
+      SDL_Rect sprite_position{
+          .x = static_cast<int>((i * Renderer::position_to_pixels) -
+                                x_offset_edge - x_offset_camera),
+          .y = static_cast<int>((j * Renderer::position_to_pixels) -
+                                y_offset_edge - y_offset_camera),
+          .w = Renderer::position_to_pixels,
+          .h = Renderer::position_to_pixels,
+      };
+
+      SDL_RenderCopy(renderer, sprite_data.tilemap, &grass, &sprite_position);
+    }
 }

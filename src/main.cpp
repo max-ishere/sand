@@ -22,7 +22,7 @@
 int main(int argc, char *argv[]) {
   srand(time(NULL));
 
-  const float fps = 30;
+  const float fps = 24;
 
   Renderer Renderer;
   Physics Physics;
@@ -41,17 +41,36 @@ int main(int argc, char *argv[]) {
 
     b2PolygonShape shape;
     shape.SetAsBox(.5f, .5f);
+
     body->CreateFixture(&shape, 1)->SetFriction(5);
-    registry.emplace<RendererData>(entity);
+    registry.emplace<RendererData>(
+        entity,
+        RendererData{.sprite = true, .sprite_id = SpriteData::SpriteId::Box});
   }
+
+  const auto box = registry.create();
+  MakePhysicsEntity(registry, box, Physics.world);
+
+  const b2Vec2 position(0, -1);
+  auto body = registry.get<b2Body *>(box);
+  body->SetTransform(position, 0);
+  body->SetType(b2_staticBody);
+
+  b2PolygonShape box_shape;
+  box_shape.SetAsBox(.5f, .5f);
+
+  body->CreateFixture(&box_shape, 1)->SetFriction(5);
+  registry.emplace<RendererData>(box);
 
   const auto player = registry.create();
   MakePhysicsEntity(registry, player, Physics.world);
   registry.emplace<MovementIntent>(player);
-  b2PolygonShape shape;
-  shape.SetAsBox(.5f, .5f);
+
+  b2CircleShape shape;
+  shape.m_radius = 0x1p-3;
   registry.get<b2Body *>(player)->CreateFixture(&shape, 1)->SetFriction(5);
-  registry.emplace<RendererData>(player, true);
+  registry.emplace<RendererData>(player, true, SpriteData::SpriteId::Character,
+                                 0.f, 0.5 - shape.m_radius);
 
   bool quit = false;
   while (!quit) {
@@ -63,8 +82,13 @@ int main(int argc, char *argv[]) {
     HandleEvents(registry, quit, state);
     HandleControlIntents(registry);
     Physics(registry, 1.f / fps);
-    const auto position = registry.get<b2Body *>(player)->GetPosition();
+
+    const b2Vec2 &position = registry.get<b2Body *>(player)->GetPosition();
     Renderer.camera_data = position;
+
+    const RendererData &render_data = registry.get<RendererData>(player);
+    Renderer.camera_data.x += render_data.x_offset;
+    Renderer.camera_data.y += render_data.y_offset;
     Renderer(registry);
 
     std::clog << "renderable entities: " << registry.view<RendererData>().size()
