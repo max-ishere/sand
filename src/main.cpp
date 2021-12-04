@@ -97,18 +97,17 @@ int main(int argc, char *argv[]) {
     Renderer.camera_data.x += render_data.x_offset;
     Renderer.camera_data.y += render_data.y_offset;
 
-    if (frame_conter % (int)fps == 0)
-      registry.sort<RendererData>([&registry](
-                                      const entt::entity lentity,
-                                      const entt::entity rentity) -> bool {
-        const auto &lposition = registry.get<b2Body *>(lentity)->GetPosition(),
-                   rposition = registry.get<b2Body *>(rentity)->GetPosition();
+    registry.sort<RendererData>([&registry](
+                                    const entt::entity lentity,
+                                    const entt::entity rentity) -> bool {
+      const auto &lposition = registry.get<b2Body *>(lentity)->GetPosition(),
+                 rposition = registry.get<b2Body *>(rentity)->GetPosition();
 
-        const auto lindex = registry.get<RendererData>(lentity).z_index,
-                   rindex = registry.get<RendererData>(rentity).z_index;
+      const auto lindex = registry.get<RendererData>(lentity).z_index,
+                 rindex = registry.get<RendererData>(rentity).z_index;
 
-        return ZindexLessOrdered(lposition, lindex, rposition, rindex);
-      });
+      return ZindexLessOrdered(lposition, lindex, rposition, rindex);
+    });
 
     Renderer(registry);
 
