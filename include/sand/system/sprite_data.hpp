@@ -21,7 +21,7 @@ public:
   [[nodiscard]] constexpr SDL_Rect operator()(SpriteId id) const {
     switch (id) {
     case SpriteId::Character:
-      return SDL_Rect{SPRITE_GRID(0, 0), SPRITE_SIZE};
+      return SDL_Rect{SPRITE_GRID(1, 0), SPRITE_SIZE};
       break;
     case SpriteId::Grass:
       return SDL_Rect{SPRITE_GRID(0, 1), SPRITE_SIZE};

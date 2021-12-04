@@ -1,5 +1,6 @@
 add_executable(sand_test
-  z_index_test.cpp)
+  z_index_test.cpp
+  )
 
 include(FetchContent)
 FetchContent_Declare(
