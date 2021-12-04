@@ -1,15 +1,4 @@
 build/**
-
-*~
-\#*
-*\#
-
 *.o
 sand_test
-main
-
-doc/**.html
-doc/**.png
-doc/**.jpg
-
-.cache/**
+sand_main
