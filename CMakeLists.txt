@@ -4,6 +4,8 @@ project("Sand"
         DESCRIPTION "A game"
         LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 20)
+
 set(CMAKE_BUILD_TYPE Debug)
 add_compile_definitions("$<$<CONFIG:DEBUG>:DEBUG>")
 
@@ -11,3 +13,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(include)
 add_subdirectory(src)
+add_subdirectory(tests)

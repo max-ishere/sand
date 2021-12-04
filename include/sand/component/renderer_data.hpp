@@ -8,5 +8,5 @@ struct RendererData {
   bool sprite{false};
   SpriteData::SpriteId sprite_id{};
   float x_offset{}, y_offset{};
-  unsigned int z_index = z_normal_index;
+  unsigned int z_index{z_normal_index};
 };
