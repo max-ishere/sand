@@ -1,4 +1,6 @@
 #include <SDL2/SDL.h>
+#include <box2d/b2_body.h>
+#include <box2d/b2_time_step.h>
 #include <box2d/box2d.h>
 #include <cstddef>
 #include <cstdlib>
@@ -29,12 +31,25 @@ int main(int argc, char *argv[]) {
   MakePhysicsEntity(registry, player, Physics.world);
   registry.emplace<MovementIntent>(player);
 
-  b2CircleShape shape;
-  shape.m_radius = 0x1p-3;
-  registry.get<b2Body *>(player)->CreateFixture(&shape, 1)->SetFriction(5);
-  registry.emplace<RendererData>(player, true, SpriteData::SpriteId::Character,
-                                 0.f, 0.5 - shape.m_radius,
-                                 RendererData::z_normal_index + 1);
+  b2CircleShape character_collider;
+  character_collider.m_radius = 0x1p-3;
+  registry.get<b2Body *>(player)
+      ->CreateFixture(&character_collider, 1)
+      ->SetFriction(5);
+  registry.emplace<RendererData>(
+      player, true, SpriteData::SpriteId::CharacterMale, 0.f,
+      0.5 - character_collider.m_radius, RendererData::z_normal_index + 1);
+
+  const auto ai_agent = registry.create();
+  MakePhysicsEntity(registry, ai_agent, Physics.world);
+  registry.emplace<AI>(ai_agent);
+
+  b2Body *ai_physics_body = registry.get<b2Body *>(ai_agent);
+  ai_physics_body->CreateFixture(&character_collider, 1)->SetFriction(5);
+  ai_physics_body->SetTransform(b2Vec2(-4, 0), 0);
+  registry.emplace<RendererData>(ai_agent, true,
+                                 SpriteData::SpriteId::CharacterFemale, 0.f,
+                                 0.5 - character_collider.m_radius);
 
   auto frame_conter = 0u;
 
@@ -46,9 +61,13 @@ int main(int argc, char *argv[]) {
 
     HUDstate state;
 
-    registry.emplace_or_replace<MovementIntent>(
-        player, HandleEvents(registry, quit, state));
+    registry.emplace_or_replace<MovementIntent>(player,
+                                                HandleEvents(quit, state));
+    if (frame_conter % ((int)fps) == 0)
+      ProcessAI(registry);
+
     HandleControlIntents(registry);
+
     Physics(registry, 1.f / fps);
 
     const b2Vec2 &position = registry.get<b2Body *>(player)->GetPosition();
@@ -71,15 +90,6 @@ int main(int argc, char *argv[]) {
     });
 
     Renderer(registry);
-
-    std::clog << "renderable entities: " << registry.view<RendererData>().size()
-              << "\nphysics entities: " << registry.view<b2Body *>().size()
-              << "\nwindow size: " << get<0>(Renderer.WindowSize()) << " "
-              << get<1>(Renderer.WindowSize()) << "\n\n"
-              << "\n-----"
-              << "Player data: pos: ("
-              << registry.get<b2Body *>(player)->GetPosition().x << ", "
-              << registry.get<b2Body *>(player)->GetPosition().y << ")";
 
     timer.stop();
     if (timer.elapsedMilliseconds() < 1000.f / fps) {

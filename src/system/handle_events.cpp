@@ -11,8 +11,7 @@
 #include <sand/system/kbd_control.hpp>
 #include <type_traits>
 
-MovementIntent HandleEvents(entt::registry &registry, bool &quit,
-                            HUDstate &state) {
+MovementIntent HandleEvents(bool &quit, HUDstate &state) {
   SDL_Event e;
   while (SDL_PollEvent(&e)) {
     if (e.type == SDL_QUIT)
@@ -37,11 +36,8 @@ MovementIntent HandleEvents(entt::registry &registry, bool &quit,
   std::clamp(state.x, -1, 1);
   std::clamp(state.y, -1, 1);
 
-  if (state.x == 0 and state.y == 0) {
-    registry.view<MovementIntent>().each(
-        [](MovementIntent &intent) { intent.velocity = 0; });
+  if (state.x == 0 and state.y == 0)
     return MovementIntent{};
-  }
 
   float angle = 0;
   switch (state.y) {
@@ -62,7 +58,7 @@ MovementIntent HandleEvents(entt::registry &registry, bool &quit,
 
 void HandleControlIntents(entt::registry &registry) {
   registry.view<MovementIntent, b2Body *>().each(
-      [](MovementIntent &intent, b2Body *physics_body) {
+      [](const MovementIntent &intent, b2Body *physics_body) {
         const b2Vec2 &body_velocity = physics_body->GetLinearVelocity();
 
         b2Vec2 velocity(cos(intent.angle) * intent.velocity,

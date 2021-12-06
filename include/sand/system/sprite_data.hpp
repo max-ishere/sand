@@ -10,7 +10,8 @@ public:
   SDL_Texture *tilemap{nullptr};
   static const auto pixels_per_sprite = 16u;
   enum class SpriteId : uintmax_t {
-    Character = 0u,
+    CharacterMale = 0u,
+    CharacterFemale,
     Grass,
     Box,
   };
@@ -20,8 +21,11 @@ public:
 
   [[nodiscard]] constexpr SDL_Rect operator()(SpriteId id) const {
     switch (id) {
-    case SpriteId::Character:
+    case SpriteId::CharacterMale:
       return SDL_Rect{SPRITE_GRID(1, 0), SPRITE_SIZE};
+      break;
+    case SpriteId::CharacterFemale:
+      return SDL_Rect{SPRITE_GRID(0, 0), SPRITE_SIZE};
       break;
     case SpriteId::Grass:
       return SDL_Rect{SPRITE_GRID(0, 1), SPRITE_SIZE};
