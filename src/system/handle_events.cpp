@@ -10,10 +10,9 @@
 #include <sand/component/player_controllable.hpp>
 #include <sand/system/kbd_control.hpp>
 #include <type_traits>
-constexpr void HandleKbEvents(entt::registry &, SDL_KeyboardEvent,
-                              HUDstate &state);
 
-void HandleEvents(entt::registry &registry, bool &quit, HUDstate &state) {
+MovementIntent HandleEvents(entt::registry &registry, bool &quit,
+                            HUDstate &state) {
   SDL_Event e;
   while (SDL_PollEvent(&e)) {
     if (e.type == SDL_QUIT)
@@ -41,7 +40,7 @@ void HandleEvents(entt::registry &registry, bool &quit, HUDstate &state) {
   if (state.x == 0 and state.y == 0) {
     registry.view<MovementIntent>().each(
         [](MovementIntent &intent) { intent.velocity = 0; });
-    return;
+    return MovementIntent{};
   }
 
   float angle = 0;
@@ -58,11 +57,7 @@ void HandleEvents(entt::registry &registry, bool &quit, HUDstate &state) {
   }
   angle *= std::numbers::pi / 4;
 
-  registry.view<MovementIntent>().each(
-      [angle, player_speed](MovementIntent &intent) {
-        intent.angle = angle;
-        intent.velocity = player_speed;
-      });
+  return MovementIntent{.angle = angle, .velocity = player_speed};
 }
 
 void HandleControlIntents(entt::registry &registry) {
