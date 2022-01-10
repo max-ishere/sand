@@ -30,3 +30,24 @@ Why I chose ECS? That is because it promises to be pretty fast and it has a rath
 3) Do the same for another system
 
 This approach may not be the best for some applications, but I think its going to be perfect for prototyping. When you dont know what you will have in the end and not having a defined journey to that end its
+
+* BUILDING
+
+Platform: Arch Linux
+
+Dependencies:
+
+- Box2d ([[https://github.com/erincatto/box2d][Github]], [[https://github.com/erincatto/box2d][Website/Docs]]) :: Installed with =pacman -S box2d=
+- SDL2 ([[https://github.com/libsdl-org/SDL][Github]],[[https://libsdl.org][Website/Docs]]) :: Installed with =pacman -S sdl2=
+- EnTT ([[https://github.com/skypjack/entt][Github]]) :: See [[https://github.com/skypjack/entt#packaging-tools][#Packaging Tools]] for installation instructions
+- Imgui ([[/][Github]]) :: Installed with =yay -S imgui= and copied backend code in =include/dependencies= and =src/dependencies=.
+
+This is a cmake project. Build it with:
+
+#+begin_src shell
+# in project root
+cmake -S . -B build
+cmake --build build/ -j 4
+#+end_src
+
+Check Cmake files for location of the executable. It should be in =build/src/sand_main=.
