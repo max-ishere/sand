@@ -1,3 +1,4 @@
+#include "sand/dependencies/imgui/imgui_impl_sdl.hpp"
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_scancode.h>
 #include <algorithm>
@@ -16,6 +17,7 @@ MovementIntent HandleEvents(bool &quit, HUDstate &state) {
   while (SDL_PollEvent(&e)) {
     if (e.type == SDL_QUIT)
       quit = true;
+    ImGui_ImplSDL2_ProcessEvent(&e);
   }
 
   float player_speed = 3;

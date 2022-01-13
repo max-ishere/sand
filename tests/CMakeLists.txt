@@ -1,5 +1,6 @@
 add_executable(sand_test
   z_index_test.cpp
+  noise_test.cpp
   )
 
 include(FetchContent)

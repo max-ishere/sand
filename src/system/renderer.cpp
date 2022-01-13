@@ -1,3 +1,6 @@
+#include "sand/dependencies/imgui/imgui_impl_sdl.hpp"
+#include "sand/dependencies/imgui/imgui_impl_sdlrenderer.hpp"
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
@@ -9,13 +12,11 @@
 #include <box2d/b2_math.h>
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/registry.hpp>
+#include <imgui.h>
 #include <iostream>
 #include <sand/component/renderer_data.hpp>
 #include <sand/system/renderer.hpp>
 #include <sand/system/sprite_data.hpp>
-
-constexpr void RenderGround(SDL_Renderer *, const SpriteData &, const int,
-                            const int, const int, const int);
 
 void Renderer::operator()(entt::registry &registry) {
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
@@ -24,7 +25,7 @@ void Renderer::operator()(entt::registry &registry) {
   SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
 
   static_assert(Renderer::position_to_pixels % 2 == 0,
-                "Pixel scale should be divisible by 2");
+                "For easier screen centering math pixel scale should be even");
 
   int width = 0, height = 0;
   SDL_GetWindowSize(window, &width, &height);
@@ -35,37 +36,11 @@ void Renderer::operator()(entt::registry &registry) {
       static_cast<int>((1.f - camera_data.y + floor(camera_data.y)) *
                        Renderer::position_to_pixels);
 
-  RenderGround(renderer, sprite_data, width, height, x_offset_camera,
-               y_offset_camera);
+  this->RenderGround(sprite_data, width, height, x_offset_camera,
+                     y_offset_camera);
 
-  int center_x = round((width - position_to_pixels) / 2),
-      center_y = round((height - position_to_pixels) / 2);
-
-  registry.view<RendererData, b2Body *>().use<RendererData>().each(
-      [this, center_x, center_y](const auto &renderer_data, const auto &body) {
-        b2Vec2 position = body->GetPosition();
-        SDL_Rect sprite_position{
-            .x = static_cast<int>(
-                round((position.x - camera_data.x + renderer_data.x_offset) *
-                          position_to_pixels +
-                      center_x)),
-            .y = static_cast<int>(
-                round(-(position.y - camera_data.y + renderer_data.y_offset) *
-                          position_to_pixels +
-                      center_y)),
-
-            .w = position_to_pixels,
-            .h = position_to_pixels,
-        };
-        if (!renderer_data.sprite) {
-          SDL_RenderDrawRect(renderer, &sprite_position);
-        } else {
-          SDL_Rect sprite = sprite_data(renderer_data.sprite_id);
-          SDL_RenderCopy(renderer, sprite_data.tilemap, &sprite,
-                         &sprite_position);
-        }
-      });
-
+  this->RenderEntites(registry, width, height);
+  this->RenderImGui(registry);
   SDL_RenderPresent(renderer);
 }
 
@@ -95,16 +70,27 @@ Renderer::Renderer() {
   SDLassert(temp_surface);
   sprite_data.tilemap = SDL_CreateTextureFromSurface(renderer, temp_surface);
   SDL_FreeSurface(temp_surface);
+
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  ImGui::StyleColorsDark();
+
+  ImGui_ImplSDL2_InitForSDLRenderer(window);
+  ImGui_ImplSDLRenderer_Init(renderer);
 }
+
 Renderer::~Renderer() {
+  ImGui_ImplSDLRenderer_Shutdown();
+  ImGui_ImplSDL2_Shutdown();
+  ImGui::DestroyContext();
+
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
-
   SDL_Quit();
 }
 
-constexpr void RenderGround(SDL_Renderer *renderer,
-                            const SpriteData &sprite_data, const int width,
+void Renderer::RenderGround(const SpriteData &sprite_data, const int width,
                             const int height, const int x_offset_camera,
                             const int y_offset_camera) {
   const int grid_width = width / Renderer::position_to_pixels + 4,
@@ -134,4 +120,47 @@ constexpr void RenderGround(SDL_Renderer *renderer,
 
       SDL_RenderCopy(renderer, sprite_data.tilemap, &grass, &sprite_position);
     }
+}
+
+void Renderer::RenderEntites(entt::registry &registry,
+                             const std::integral auto width,
+                             const std::integral auto height) {
+  int center_x = round((width - position_to_pixels) / 2),
+      center_y = round((height - position_to_pixels) / 2);
+
+  registry.view<RendererData, b2Body *>().use<RendererData>().each(
+      [this, center_x, center_y](const auto &renderer_data, const auto &body) {
+        b2Vec2 position = body->GetPosition();
+        SDL_Rect sprite_position{
+            .x = static_cast<int>(
+                round((position.x - camera_data.x + renderer_data.x_offset) *
+                          position_to_pixels +
+                      center_x)),
+            .y = static_cast<int>(
+                round(-(position.y - camera_data.y + renderer_data.y_offset) *
+                          position_to_pixels +
+                      center_y)),
+
+            .w = position_to_pixels,
+            .h = position_to_pixels,
+        };
+        if (!renderer_data.sprite) {
+          SDL_RenderDrawRect(renderer, &sprite_position);
+        } else {
+          SDL_Rect sprite = sprite_data(renderer_data.sprite_id);
+          SDL_RenderCopy(renderer, sprite_data.tilemap, &sprite,
+                         &sprite_position);
+        }
+      });
+}
+
+void Renderer::RenderImGui(entt::registry &registry) {
+  ImGui_ImplSDLRenderer_NewFrame();
+  ImGui_ImplSDL2_NewFrame(window);
+  ImGui::NewFrame();
+  bool TRUE = true;
+  ImGui::ShowDemoWindow(&TRUE);
+
+  ImGui::Render();
+  ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 }
