@@ -16,6 +16,7 @@ class Renderer {
                     const int);
   void RenderEntites(entt::registry &, const std::integral auto,
                      const std::integral auto);
+  void RenderDebug();
   void RenderImGui(entt::registry &);
 
 public:

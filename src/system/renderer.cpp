@@ -1,3 +1,5 @@
+#include "sand/core/noise.hpp"
+#include "sand/core/random.hpp"
 #include "sand/dependencies/imgui/imgui_impl_sdl.hpp"
 #include "sand/dependencies/imgui/imgui_impl_sdlrenderer.hpp"
 #include <SDL2/SDL.h>
@@ -10,6 +12,8 @@
 #include <algorithm>
 #include <box2d/b2_body.h>
 #include <box2d/b2_math.h>
+#include <cstddef>
+#include <cstdint>
 #include <entt/entity/fwd.hpp>
 #include <entt/entity/registry.hpp>
 #include <imgui.h>
@@ -40,6 +44,7 @@ void Renderer::operator()(entt::registry &registry) {
                      y_offset_camera);
 
   this->RenderEntites(registry, width, height);
+  this->RenderDebug();
   this->RenderImGui(registry);
   SDL_RenderPresent(renderer);
 }
@@ -154,12 +159,47 @@ void Renderer::RenderEntites(entt::registry &registry,
       });
 }
 
+void Renderer::RenderDebug() {
+  const int SIZE_X = 512, SIZE_Y = 512;
+  SDL_Texture *texture =
+      SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                        SDL_TEXTUREACCESS_TARGET, SIZE_X, SIZE_Y);
+  SDL_SetRenderTarget(renderer, texture);
+  SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
+  SDL_RenderClear(renderer);
+
+  static auto noise_map =
+      RandomNoiseMap<uint32_t, SIZE_X, SIZE_Y>(FastRandom());
+  static bool scaled = false;
+
+  if (not scaled) {
+    const auto SCALE = 32;
+    noise_map = ScaleArray<uint32_t, SIZE_X / 4, SIZE_Y / 4, 4>(
+        CropArray<uint32_t, SIZE_X, SIZE_Y, SIZE_X / 4>(BlurArray(
+            ScaleArray<uint32_t, SIZE_X / SCALE, SIZE_Y / SCALE, SCALE>(
+                CropArray<uint32_t, SIZE_X, SIZE_Y, SIZE_X / SCALE>(noise_map)),
+            10)));
+    scaled = true;
+  }
+
+  for (auto x = 0u; x < SIZE_X; x++)
+    for (auto y = 0u; y < SIZE_Y; y++) {
+      SDL_SetRenderDrawColor(renderer, noise_map[x][y], noise_map[x][y],
+                             noise_map[x][y], 0xff);
+      SDL_RenderDrawPoint(renderer, x, y);
+    }
+
+  SDL_SetRenderTarget(renderer, NULL);
+  auto pos = SDL_Rect{.x = 15, .y = 15, .w = SIZE_X, .h = SIZE_Y};
+  SDL_RenderCopy(renderer, texture, NULL, &pos);
+}
+
 void Renderer::RenderImGui(entt::registry &registry) {
   ImGui_ImplSDLRenderer_NewFrame();
   ImGui_ImplSDL2_NewFrame(window);
   ImGui::NewFrame();
-  bool TRUE = true;
-  ImGui::ShowDemoWindow(&TRUE);
+
+  // ImGui code here
 
   ImGui::Render();
   ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());

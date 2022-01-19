@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
   const auto ai_agent = registry.create();
   MakePhysicsEntity(registry, ai_agent, Physics.world);
-  registry.emplace<AI>(ai_agent);
+  // registry.emplace<AI>(ai_agent); // disabled because its annoying
   registry.emplace<LivingThing>(ai_agent,
                                 LivingThing{.ticks_until_hungry = 500});
 
