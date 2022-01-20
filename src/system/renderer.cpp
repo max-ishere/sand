@@ -1,5 +1,6 @@
 #include "sand/core/noise.hpp"
 #include "sand/core/random.hpp"
+#include "sand/core/timer.hpp"
 #include "sand/dependencies/imgui/imgui_impl_sdl.hpp"
 #include "sand/dependencies/imgui/imgui_impl_sdlrenderer.hpp"
 #include <SDL2/SDL.h>
@@ -12,6 +13,7 @@
 #include <algorithm>
 #include <box2d/b2_body.h>
 #include <box2d/b2_math.h>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <entt/entity/fwd.hpp>
@@ -23,6 +25,10 @@
 #include <sand/system/sprite_data.hpp>
 
 void Renderer::operator()(entt::registry &registry) {
+  ImGui_ImplSDLRenderer_NewFrame();
+  ImGui_ImplSDL2_NewFrame(window);
+  ImGui::NewFrame();
+
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
 
@@ -46,6 +52,10 @@ void Renderer::operator()(entt::registry &registry) {
   this->RenderEntites(registry, width, height);
   this->RenderDebug();
   this->RenderImGui(registry);
+
+  ImGui::Render();
+  ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+
   SDL_RenderPresent(renderer);
 }
 
@@ -160,7 +170,7 @@ void Renderer::RenderEntites(entt::registry &registry,
 }
 
 void Renderer::RenderDebug() {
-  const int SIZE_X = 512, SIZE_Y = 512;
+  const int SIZE_X = 300, SIZE_Y = 300;
   SDL_Texture *texture =
       SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
                         SDL_TEXTUREACCESS_TARGET, SIZE_X, SIZE_Y);
@@ -168,39 +178,54 @@ void Renderer::RenderDebug() {
   SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
   SDL_RenderClear(renderer);
 
+  const auto SCALE = 20;
   static auto noise_map =
-      RandomNoiseMap<uint32_t, SIZE_X, SIZE_Y>(FastRandom());
-  static bool scaled = false;
+      ScaleArray<uint32_t, SIZE_X / SCALE, SIZE_Y / SCALE, SCALE>(
+          CropArray<uint32_t, SIZE_X, SIZE_Y, SIZE_X / SCALE>(
+              RandomNoiseMap<uint32_t, SIZE_X, SIZE_Y>(FastRandom())));
 
-  if (not scaled) {
-    const auto SCALE = 32;
-    noise_map = ScaleArray<uint32_t, SIZE_X / 4, SIZE_Y / 4, 4>(
-        CropArray<uint32_t, SIZE_X, SIZE_Y, SIZE_X / 4>(BlurArray(
-            ScaleArray<uint32_t, SIZE_X / SCALE, SIZE_Y / SCALE, SCALE>(
-                CropArray<uint32_t, SIZE_X, SIZE_Y, SIZE_X / SCALE>(noise_map)),
-            10)));
-    scaled = true;
-  }
+  ImGui::Begin("Perlin noise thing");
+  static bool blur = false;
+  static auto display_map = noise_map;
+  bool update = false;
+  update = ImGui::Checkbox("Enable blur", &blur) ? true : update;
+  Timer timer;
+  if (blur) {
 
+    static int averaging_radius = 1;
+    update = ImGui::SliderInt("Averaging radius", &averaging_radius, 1, 10)
+                 ? true
+                 : update;
+    static int iterations = 1;
+    update = ImGui::SliderInt("Iterations", &iterations, 1, 10) ? true : update;
+    if (update) {
+      display_map = noise_map;
+      timer.start();
+      for (auto i = 0; i < iterations; i++)
+        display_map = BlurArray(display_map, averaging_radius + i);
+      // timer.stop();
+      update = false;
+    }
+  } else
+    display_map = noise_map;
+  ImGui::Text("%f", timer.elapsedMilliseconds());
   for (auto x = 0u; x < SIZE_X; x++)
     for (auto y = 0u; y < SIZE_Y; y++) {
-      SDL_SetRenderDrawColor(renderer, noise_map[x][y], noise_map[x][y],
-                             noise_map[x][y], 0xff);
-      SDL_RenderDrawPoint(renderer, x, y);
+      SDL_SetRenderDrawColor(renderer, display_map[x][y] + 10,
+                             display_map[x][y] + 2, display_map[x][y], 0xff);
+      SDL_Rect rect{.x = (int)x, .y = (int)y, .w = 1, .h = 1};
+      SDL_RenderFillRect(renderer, &rect);
     }
 
   SDL_SetRenderTarget(renderer, NULL);
-  auto pos = SDL_Rect{.x = 15, .y = 15, .w = SIZE_X, .h = SIZE_Y};
+  auto pos = SDL_Rect{.x = 15, .y = 15, .w = SIZE_X * 2, .h = SIZE_Y * 2};
   SDL_RenderCopy(renderer, texture, NULL, &pos);
+  SDL_DestroyTexture(texture);
+
+  ImGui::End();
 }
 
 void Renderer::RenderImGui(entt::registry &registry) {
-  ImGui_ImplSDLRenderer_NewFrame();
-  ImGui_ImplSDL2_NewFrame(window);
-  ImGui::NewFrame();
 
   // ImGui code here
-
-  ImGui::Render();
-  ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 }
